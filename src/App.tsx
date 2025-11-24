@@ -13,7 +13,8 @@ import Guests from "./pages/Guests";
 import Budget from "./pages/Budget";
 import Profile from "./pages/Profile";
 import CalendarPage from "./pages/CalendarPage"; 
-import Vendors from "./pages/Vendors"; // IMPORT BARU: VENDORS
+import Vendors from "./pages/Vendors"; 
+import MoodBoard from "./pages/MoodBoard"; // 1. PASTIKAN INI DI-IMPORT
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -70,9 +71,13 @@ const App = () => (
           <Route path="/budget" element={<ProtectedRoute><Budget /><BottomNav /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /><BottomNav /></ProtectedRoute>} />
           <Route path="/calendar" element={<ProtectedRoute><CalendarPage /><BottomNav /></ProtectedRoute>} />
-          
-          {/* Rute Baru Vendor */}
           <Route path="/vendors" element={<ProtectedRoute><Vendors /><BottomNav /></ProtectedRoute>} />
+          
+          {/* 2. PASTIKAN BAGIAN INI ADA 👇 */}
+          <Route path="/moodboard" element={<ProtectedRoute><MoodBoard /><BottomNav /></ProtectedRoute>} />
+
+          {/* Halaman Undangan Publik (Opsional jika nanti mau dipakai) */}
+          {/* <Route path="/invite/:weddingId" element={<Invitation />} /> */}
 
           <Route path="*" element={<NotFound />} />
         </Routes>
