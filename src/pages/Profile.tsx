@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, LogOut, Calendar, Save } from "lucide-react";
 import underwaterDecoration from "@/assets/underwater-decoration.png";
 import { toast } from "sonner";
+import PartnerInvitation from "@/components/PartnerInvitation";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -83,7 +84,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-underwater p-6 pb-24">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="text-center space-y-4">
-          <Avatar className="w-24 h-24 mx-auto">
+          <Avatar className="w-24 h-24 mx-auto border-4 border-white shadow-lg">
             <AvatarFallback className="bg-primary/20 text-primary text-2xl">
               {profile?.full_name?.charAt(0) || "U"}
             </AvatarFallback>
@@ -93,6 +94,9 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">Wedding Planner</p>
           </div>
         </div>
+
+        {/* Fitur Partner Invitation ditambahkan di sini */}
+        <PartnerInvitation />
 
         <Card className="bg-card shadow-card rounded-3xl p-6">
           <div className="flex items-center gap-3 mb-6">
@@ -139,7 +143,7 @@ const Profile = () => {
               <h3 className="text-sm font-medium text-muted-foreground mb-2">Account Settings</h3>
               <Button 
                 variant="outline" 
-                className="w-full justify-start text-destructive hover:text-destructive"
+                className="w-full justify-start text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/5"
                 onClick={handleSignOut}
               >
                 <LogOut className="w-4 h-4 mr-2" />

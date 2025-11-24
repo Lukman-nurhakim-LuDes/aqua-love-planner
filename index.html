@@ -2,16 +2,30 @@
 <html lang="en" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Viewport diupdate agar aplikasi terlihat seperti native app (tidak bisa di-zoom cubit) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
+    <!-- Mencegah Google Translate crash -->
     <meta name="google" content="notranslate" />
 
-    <title>WeddingPreparationsCouple</title>
-    <meta name="description" content="Lovable Generated Project" />
+    <!-- PWA Setup (Agar bisa diinstal) -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+    
+    <!-- Ikon Aplikasi -->
+    <link rel="icon" href="/couple-avatars.png" /> 
+    <link rel="apple-touch-icon" href="/couple-avatars.png">
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <title>Wedding Preparation</title>
+    <meta name="description" content="Plan your dream wedding together" />
     <meta name="author" content="Lovable" />
 
-    <meta property="og:title" content="WeddingPreparationsCouple" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="Wedding Preparation" />
+    <meta property="og:description" content="Collaborative Wedding Planner" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
