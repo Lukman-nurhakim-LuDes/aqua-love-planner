@@ -17,7 +17,7 @@ import Vendors from "./pages/Vendors";
 import MoodBoard from "./pages/MoodBoard";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
-import Invitation from "./pages/Invitation"; 
+import Invitation from "./pages/Invitations"; 
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
