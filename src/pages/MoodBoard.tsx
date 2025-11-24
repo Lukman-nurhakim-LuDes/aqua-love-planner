@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,7 +39,7 @@ const MoodBoard = () => {
     if (weddingData) {
       setWedding(weddingData);
       
-      // FIX: Tambahkan 'as any' di sini
+      // Menggunakan 'as any' untuk menghindari error TypeScript sementara
       const { data } = await supabase
         .from("inspirations" as any)
         .select("*")
@@ -84,7 +83,6 @@ const MoodBoard = () => {
         .getPublicUrl(filePath);
 
       // 3. Save to Database
-      // FIX: Tambahkan 'as any' di sini juga
       const { error: dbError } = await supabase
         .from("inspirations" as any)
         .insert({
@@ -112,7 +110,6 @@ const MoodBoard = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm("Delete this inspiration?")) {
-      // FIX: Tambahkan 'as any' di sini juga
       await supabase.from("inspirations" as any).delete().eq("id", id);
       toast.success("Deleted");
       fetchData();
