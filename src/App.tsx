@@ -17,7 +17,7 @@ import Vendors from "./pages/Vendors";
 import MoodBoard from "./pages/MoodBoard";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
-import Invitation from "./pages/Invitations"; 
+import Invitation from "./pages/Invitation"; // IMPORT INI PENTING
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -69,7 +69,7 @@ const App = () => (
           {/* 1. HALAMAN AUTH */}
           <Route path="/auth" element={<Auth />} />
           
-          {/* 2. HALAMAN PUBLIK (UNDANGAN) */}
+          {/* 2. HALAMAN PUBLIK (UNDANGAN) - TIDAK PERLU LOGIN */}
           <Route path="/invite/:weddingId" element={<Invitation />} />
 
           {/* 3. HALAMAN PRIVATE (DASHBOARD & FITUR) */}
@@ -85,6 +85,7 @@ const App = () => (
           <Route path="/moodboard" element={<ProtectedRoute><MoodBoard /><BottomNav /></ProtectedRoute>} />
           <Route path="/chat" element={<ProtectedRoute><Chat /><BottomNav /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /><BottomNav /></ProtectedRoute>} />
+        
 
           {/* 4. NOT FOUND */}
           <Route path="*" element={<NotFound />} />

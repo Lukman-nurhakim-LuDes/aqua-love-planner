@@ -31,7 +31,6 @@ const Invitation = () => {
   }, [weddingId]);
 
   const fetchWeddingDetails = async () => {
-    // Kita gunakan query tanpa RLS ketat atau pastikan policy 'public' sudah aktif
     const { data } = await supabase
       .from("weddings")
       .select("venue, wedding_date") 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, HeartHandshake, ArrowRight } from "lucide-react";
+import { Copy, HeartHandshake, ArrowRight, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const PartnerInvitation = () => {
@@ -27,7 +27,7 @@ const PartnerInvitation = () => {
       .from("weddings")
       .select("*")
       .or(`partner_one_id.eq.${user.id},partner_two_id.eq.${user.id}`)
-      .single();
+      .maybeSingle(); // Gunakan maybeSingle agar tidak error jika null
 
     if (data) {
       setWedding(data);
@@ -42,12 +42,20 @@ const PartnerInvitation = () => {
   };
 
   const joinWedding = async () => {
-    if (!joinCode) {
+    // FIX 1: Hapus spasi di depan/belakang agar ID valid
+    const cleanCode = joinCode.trim();
+
+    if (!cleanCode) {
       toast.error("Please enter a valid Wedding ID");
       return;
     }
 
-    if (wedding?.id === joinCode) {
+    if (cleanCode.length < 20) { // Validasi panjang UUID
+      toast.error("Invalid ID format. Please check again.");
+      return;
+    }
+
+    if (wedding?.id === cleanCode) {
       toast.error("You cannot join your own wedding ID!");
       return;
     }
@@ -58,11 +66,16 @@ const PartnerInvitation = () => {
       const { data: targetWedding, error: fetchError } = await supabase
         .from("weddings")
         .select("*")
-        .eq("id", joinCode)
-        .single();
+        .eq("id", cleanCode)
+        .maybeSingle(); // Gunakan maybeSingle
 
-      if (fetchError || !targetWedding) {
-        toast.error("Wedding ID not found. Please check again.");
+      if (fetchError) {
+        console.error("Error fetching:", fetchError);
+        throw new Error("Database connection error");
+      }
+
+      if (!targetWedding) {
+        toast.error("Wedding ID not found. Please check the code.");
         setLoading(false);
         return;
       }
@@ -74,45 +87,40 @@ const PartnerInvitation = () => {
       }
 
       // 2. Hapus wedding "sementara" milik user saat ini (jika ada)
-      //    karena Profile.tsx otomatis membuatkan wedding kosong saat login.
-      //    Kita harus menghapusnya agar user tidak punya 2 wedding.
       if (wedding && wedding.partner_one_id === currentUser.id && !wedding.partner_two_id) {
-         // Pastikan hanya menghapus jika belum ada data penting (opsional, tapi aman untuk akun baru)
          const { error: deleteError } = await supabase
            .from("weddings")
            .delete()
            .eq("id", wedding.id);
          
-         if (deleteError) {
-           console.error("Error deleting temp wedding:", deleteError);
-           // Lanjut saja, mungkin tidak fatal tapi idealnya bersih
-         }
+         if (deleteError) console.error("Delete error:", deleteError);
       }
 
       // 3. Update wedding target: Masukkan user ini sebagai partner_two
       const { error: updateError } = await supabase
         .from("weddings")
         .update({ partner_two_id: currentUser.id })
-        .eq("id", joinCode);
+        .eq("id", cleanCode);
 
       if (updateError) throw updateError;
 
       toast.success("Success! You are now connected with your partner.");
       
-      // Reload halaman agar semua data (Budget, Guests) ter-refresh ke data partner
+      // Reload halaman agar semua data ter-refresh
       window.location.reload(); 
       
     } catch (error: any) {
       console.error(error);
-      toast.error("Failed to join wedding: " + error.message);
+      toast.error("Failed to join: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!wedding) return null;
+  // Jika loading awal
+  if (!currentUser) return null;
 
-  const isConnected = !!wedding.partner_two_id;
+  const isConnected = wedding && !!wedding.partner_two_id;
 
   return (
     <Card className="bg-card shadow-soft border-primary/20">
@@ -137,18 +145,20 @@ const PartnerInvitation = () => {
         ) : (
           <>
             {/* Opsi 1: Bagikan Kode (User A) */}
-            <div className="space-y-3">
-              <Label className="text-foreground/80">Option 1: Invite Partner</Label>
-              <div className="flex gap-2">
-                <Input value={wedding.id} readOnly className="bg-muted font-mono text-sm" />
-                <Button variant="outline" size="icon" onClick={copyWeddingID} className="shrink-0">
-                  <Copy className="w-4 h-4" />
-                </Button>
+            {wedding && (
+              <div className="space-y-3">
+                <Label className="text-foreground/80">Option 1: Invite Partner</Label>
+                <div className="flex gap-2">
+                  <Input value={wedding.id} readOnly className="bg-muted font-mono text-sm" />
+                  <Button variant="outline" size="icon" onClick={copyWeddingID} className="shrink-0">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Copy this ID and send it to your partner.
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Copy this ID and send it to your partner.
-              </p>
-            </div>
+            )}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -170,7 +180,7 @@ const PartnerInvitation = () => {
                   className="bg-white"
                 />
                 <Button onClick={joinWedding} disabled={loading} className="shrink-0">
-                  {loading ? "..." : <ArrowRight className="w-4 h-4" />}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">

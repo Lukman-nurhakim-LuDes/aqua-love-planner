@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calculator, Users, Calendar, User, Plus, Store, Palette } from "lucide-react"; 
+import { Home, Calculator, Users, Calendar, User, Plus, Store, Palette, MessageCircle } from "lucide-react"; 
 import { useState } from "react";
 import {
   Dialog,
@@ -63,7 +63,7 @@ const BottomNav = () => {
                       </DialogHeader>
                    </div>
                    
-                   {/* GRID MENU: 3 KOLOM AGAR MUAT SEMUA */}
+                   {/* GRID MENU: 3 KOLOM AGAR MUAT 6 ITEM */}
                    <div className="grid grid-cols-3 gap-3 p-5">
                       
                       {/* 1. Budget */}
@@ -84,16 +84,22 @@ const BottomNav = () => {
                          <span className="text-xs font-medium">Tasks</span>
                       </Link>
 
-                      {/* 4. Vendors (BARU) */}
+                      {/* 4. Vendors */}
                       <Link to="/vendors" onClick={() => setIsOpen(false)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 transition-colors border border-orange-100 active:scale-95">
                          <Store size={24} className="mb-1"/>
                          <span className="text-xs font-medium">Vendors</span>
                       </Link>
                       
-                      {/* 5. Mood Board (BARU) */}
+                      {/* 5. Mood Board */}
                       <Link to="/moodboard" onClick={() => setIsOpen(false)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 transition-colors border border-pink-100 active:scale-95">
                          <Palette size={24} className="mb-1"/>
                          <span className="text-xs font-medium">Mood Board</span>
+                      </Link>
+
+                      {/* 6. Chat (BARU) */}
+                      <Link to="/chat" onClick={() => setIsOpen(false)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors border border-indigo-100 active:scale-95">
+                         <MessageCircle size={24} className="mb-1"/>
+                         <span className="text-xs font-medium">Chat</span>
                       </Link>
 
                    </div>

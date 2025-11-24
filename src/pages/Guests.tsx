@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Search, Link2, Copy } from "lucide-react"; // Tambah Copy/Link2
 import { toast } from "sonner";
 
 const Guests = () => {
@@ -57,7 +57,7 @@ const Guests = () => {
 
     try {
       if (isEditing && editId) {
-         // UPDATE (Tambahkan 'as any')
+         // UPDATE
          const { error } = await supabase.from("guests").update({
             name: formData.name,
             category: formData.category,
@@ -67,7 +67,7 @@ const Guests = () => {
          if (error) throw error;
          toast.success("Guest updated");
       } else {
-         // INSERT (Tambahkan 'as any')
+         // INSERT
          const { error } = await supabase.from("guests").insert({
             wedding_id: wedding.id,
             name: formData.name,
@@ -123,71 +123,92 @@ const Guests = () => {
 
   const totalPax = guests.reduce((sum, g) => sum + (g.status === 'attending' ? g.pax : 0), 0);
 
+  // Fungsi Copy Link
+  const copyInviteLink = () => {
+    if (!wedding) return;
+    const url = `${window.location.origin}/invite/${wedding.id}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link undangan disalin! Siap disebar.");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-underwater p-6 pb-24">
       <div className="max-w-2xl mx-auto space-y-6">
         
-        {/* Header */}
+        {/* Header Update */}
         <div className="flex items-center justify-between">
            <div>
               <h1 className="text-3xl font-bold text-teal-green">Guest List</h1>
               <p className="text-sm text-muted-foreground">{guests.length} Invitations • {totalPax} Attending</p>
            </div>
            
-           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
-              <DialogTrigger asChild>
-                 <Button className="rounded-full shadow-floating bg-primary hover:scale-105 transition-transform">
-                    <Plus className="w-5 h-5 mr-2" /> Add Guest
-                 </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white">
-                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Guest" : "Add New Guest"}</DialogTitle>
-                 </DialogHeader>
-                 <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                       <Label>Full Name</Label>
-                       <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. John Doe" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <Label>Category</Label>
-                          <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}>
-                             <SelectTrigger><SelectValue /></SelectTrigger>
-                             <SelectContent>
-                                <SelectItem value="Family">Family</SelectItem>
-                                <SelectItem value="Friend">Friend</SelectItem>
-                                <SelectItem value="Colleague">Colleague</SelectItem>
-                                <SelectItem value="VIP">VIP</SelectItem>
-                             </SelectContent>
-                          </Select>
-                       </div>
-                       <div className="space-y-2">
-                          <Label>Pax (Orang)</Label>
-                          <Input type="number" value={formData.pax} onChange={e => setFormData({...formData, pax: e.target.value})} />
-                       </div>
-                    </div>
-                    <div className="space-y-2">
-                       <Label>RSVP Status</Label>
-                       <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                             <SelectItem value="pending">Pending (Belum Jawab)</SelectItem>
-                             <SelectItem value="attending">Attending (Hadir)</SelectItem>
-                             <SelectItem value="declined">Declined (Tidak Hadir)</SelectItem>
-                          </SelectContent>
-                       </Select>
-                    </div>
-                    <Button onClick={handleSave} className="w-full">{isEditing ? "Update Guest" : "Add Guest"}</Button>
-                 </div>
-              </DialogContent>
-           </Dialog>
+           <div className="flex gap-2">
+              {/* TOMBOL BARU: SHARE LINK */}
+              <Button 
+                size="icon" 
+                variant="outline" 
+                className="rounded-full border-primary/30 text-primary hover:bg-primary/10 bg-white"
+                onClick={copyInviteLink}
+                title="Salin Link Undangan"
+              >
+                <Link2 className="w-5 h-5" />
+              </Button>
+
+              <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
+                  <DialogTrigger asChild>
+                     <Button className="rounded-full shadow-floating bg-primary hover:scale-105 transition-transform">
+                        <Plus className="w-5 h-5" /> <span className="hidden sm:inline ml-2">Add Guest</span>
+                     </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-white">
+                     <DialogHeader>
+                        <DialogTitle>{isEditing ? "Edit Guest" : "Add New Guest"}</DialogTitle>
+                     </DialogHeader>
+                     <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                           <Label>Full Name</Label>
+                           <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. John Doe" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                              <Label>Category</Label>
+                              <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}>
+                                 <SelectTrigger><SelectValue /></SelectTrigger>
+                                 <SelectContent>
+                                    <SelectItem value="Family">Family</SelectItem>
+                                    <SelectItem value="Friend">Friend</SelectItem>
+                                    <SelectItem value="Colleague">Colleague</SelectItem>
+                                    <SelectItem value="VIP">VIP</SelectItem>
+                                 </SelectContent>
+                              </Select>
+                           </div>
+                           <div className="space-y-2">
+                              <Label>Pax (Orang)</Label>
+                              <Input type="number" value={formData.pax} onChange={e => setFormData({...formData, pax: e.target.value})} />
+                           </div>
+                        </div>
+                        <div className="space-y-2">
+                           <Label>RSVP Status</Label>
+                           <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                 <SelectItem value="pending">Pending (Belum Jawab)</SelectItem>
+                                 <SelectItem value="attending">Attending (Hadir)</SelectItem>
+                                 <SelectItem value="declined">Declined (Tidak Hadir)</SelectItem>
+                              </SelectContent>
+                           </Select>
+                        </div>
+                        <Button onClick={handleSave} className="w-full">{isEditing ? "Update Guest" : "Add Guest"}</Button>
+                     </div>
+                  </DialogContent>
+              </Dialog>
+           </div>
         </div>
 
         {/* Guest List */}
         <div className="space-y-3">
            {guests.map((guest) => (
-              <Card key={guest.id} className="p-4 flex items-center justify-between shadow-soft border-none rounded-2xl group">
+              <Card key={guest.id} className="p-4 flex items-center justify-between shadow-soft border-none rounded-2xl group bg-white">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                        {guest.name.charAt(0)}
@@ -198,15 +219,18 @@ const Guests = () => {
                           <span className="text-muted-foreground">{guest.category}</span>
                           <span className="text-muted-foreground">• {guest.pax} pax</span>
                        </div>
+                       {/* Tampilkan pesan jika ada */}
+                       {guest.message && (
+                          <p className="text-xs text-gray-500 mt-1 italic">"{guest.message}"</p>
+                       )}
                     </div>
                  </div>
                  
                  <div className="flex items-center gap-3">
-                    <Badge className={`capitalize cursor-pointer ${getStatusColor(guest.status)}`}>
+                    <Badge className={`capitalize ${getStatusColor(guest.status)}`}>
                        {guest.status}
                     </Badge>
                     
-                    {/* Action Buttons */}
                     <div className="flex gap-1">
                        <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-primary" onClick={() => handleEdit(guest)}>
                           <Pencil className="w-4 h-4" />
