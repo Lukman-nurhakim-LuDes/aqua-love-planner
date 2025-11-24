@@ -17,7 +17,7 @@ const Tasks = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [wedding, setWedding] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [newTask, setNewTask] = useState({ title: "", description: "", category: "", assigned_to: "" });
+  const [newTask, setNewTask] = useState({ title: "", description: "", category: "", assigned_to: "unassigned" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -92,12 +92,12 @@ const Tasks = () => {
       title: newTask.title,
       description: newTask.description,
       category: newTask.category,
-      assigned_to: newTask.assigned_to || null,
+      assigned_to: newTask.assigned_to === "unassigned" ? null : newTask.assigned_to,
       created_by: currentUser.id,
       status: "pending"
     });
 
-    setNewTask({ title: "", description: "", category: "", assigned_to: "" });
+    setNewTask({ title: "", description: "", category: "", assigned_to: "unassigned" });
     setIsDialogOpen(false);
     toast.success("Task created!");
   };
@@ -159,14 +159,19 @@ const Tasks = () => {
                 </div>
                 <div>
                   <Label>Assign To</Label>
-                  <Select value={newTask.assigned_to} onValueChange={(value) => setNewTask({ ...newTask, assigned_to: value })}>
+                  <Select value={newTask.assigned_to || "unassigned"} onValueChange={(value) => setNewTask({ ...newTask, assigned_to: value === "unassigned" ? "" : value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Unassigned" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
-                      <SelectItem value={currentUser?.id || ""}>Me</SelectItem>
-                      <SelectItem value={wedding?.partner_two_id || wedding?.partner_one_id || ""}>Partner</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {currentUser && <SelectItem value={currentUser.id}>Me</SelectItem>}
+                      {wedding?.partner_two_id && wedding.partner_two_id !== currentUser?.id && (
+                        <SelectItem value={wedding.partner_two_id}>Partner</SelectItem>
+                      )}
+                      {wedding?.partner_one_id && wedding.partner_one_id !== currentUser?.id && (
+                        <SelectItem value={wedding.partner_one_id}>Partner</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
