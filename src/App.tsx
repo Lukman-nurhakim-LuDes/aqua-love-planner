@@ -12,7 +12,8 @@ import Tasks from "./pages/Tasks";
 import Guests from "./pages/Guests";
 import Budget from "./pages/Budget";
 import Profile from "./pages/Profile";
-import CalendarPage from "./pages/CalendarPage"; // IMPORT INI WAJIB ADA
+import CalendarPage from "./pages/CalendarPage"; 
+import Vendors from "./pages/Vendors"; // IMPORT BARU: VENDORS
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -63,73 +64,16 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           
-          {/* HOME / DASHBOARD */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<ProtectedRoute><Dashboard /><BottomNav /></ProtectedRoute>} />
+          <Route path="/tasks" element={<ProtectedRoute><Tasks /><BottomNav /></ProtectedRoute>} />
+          <Route path="/guests" element={<ProtectedRoute><Guests /><BottomNav /></ProtectedRoute>} />
+          <Route path="/budget" element={<ProtectedRoute><Budget /><BottomNav /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /><BottomNav /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><CalendarPage /><BottomNav /></ProtectedRoute>} />
+          
+          {/* Rute Baru Vendor */}
+          <Route path="/vendors" element={<ProtectedRoute><Vendors /><BottomNav /></ProtectedRoute>} />
 
-          {/* TASKS */}
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute>
-                <Tasks />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* GUESTS */}
-          <Route
-            path="/guests"
-            element={
-              <ProtectedRoute>
-                <Guests />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* BUDGET */}
-          <Route
-            path="/budget"
-            element={
-              <ProtectedRoute>
-                <Budget />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* PROFILE */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* --- BARU: CALENDAR --- */}
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <CalendarPage />
-                <BottomNav />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* 404 NOT FOUND */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
