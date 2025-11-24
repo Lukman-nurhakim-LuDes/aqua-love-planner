@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Pages
+// Pages Imports
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Guests from "./pages/Guests";
@@ -14,7 +14,10 @@ import Budget from "./pages/Budget";
 import Profile from "./pages/Profile";
 import CalendarPage from "./pages/CalendarPage"; 
 import Vendors from "./pages/Vendors"; 
-import MoodBoard from "./pages/MoodBoard"; // 1. PASTIKAN INI DI-IMPORT
+import MoodBoard from "./pages/MoodBoard";
+import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
+import Invitation from "./pages/Invitation"; 
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -63,22 +66,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* 1. HALAMAN AUTH */}
           <Route path="/auth" element={<Auth />} />
           
+          {/* 2. HALAMAN PUBLIK (UNDANGAN) */}
+          <Route path="/invite/:weddingId" element={<Invitation />} />
+
+          {/* 3. HALAMAN PRIVATE (DASHBOARD & FITUR) */}
           <Route path="/" element={<ProtectedRoute><Dashboard /><BottomNav /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /><BottomNav /></ProtectedRoute>} />
           <Route path="/guests" element={<ProtectedRoute><Guests /><BottomNav /></ProtectedRoute>} />
           <Route path="/budget" element={<ProtectedRoute><Budget /><BottomNav /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /><BottomNav /></ProtectedRoute>} />
           <Route path="/calendar" element={<ProtectedRoute><CalendarPage /><BottomNav /></ProtectedRoute>} />
-          <Route path="/vendors" element={<ProtectedRoute><Vendors /><BottomNav /></ProtectedRoute>} />
           
-          {/* 2. PASTIKAN BAGIAN INI ADA 👇 */}
+          {/* Fitur-fitur Baru */}
+          <Route path="/vendors" element={<ProtectedRoute><Vendors /><BottomNav /></ProtectedRoute>} />
           <Route path="/moodboard" element={<ProtectedRoute><MoodBoard /><BottomNav /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /><BottomNav /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /><BottomNav /></ProtectedRoute>} />
 
-          {/* Halaman Undangan Publik (Opsional jika nanti mau dipakai) */}
-          {/* <Route path="/invite/:weddingId" element={<Invitation />} /> */}
-
+          {/* 4. NOT FOUND */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

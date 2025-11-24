@@ -8,7 +8,8 @@ import {
   Users, 
   Wallet, 
   ArrowRight,
-  Loader2 
+  Loader2,
+  Bell 
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -31,6 +32,9 @@ const Dashboard = () => {
   // Next Priority Task
   const [nextTask, setNextTask] = useState<any>(null);
 
+  // Notification Count
+  const [unreadNotif, setUnreadNotif] = useState(0);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -43,7 +47,7 @@ const Dashboard = () => {
         return;
       }
 
-      // 1. Fetch Profile (Nama User)
+      // 1. Fetch Profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("full_name")
@@ -51,7 +55,17 @@ const Dashboard = () => {
         .single();
       setProfile(profileData);
 
-      // 2. Fetch Wedding Data
+      // 2. Fetch Notification Count
+      // Cek dulu apakah tabel notifications ada (untuk menghindari error jika belum setup)
+      const { count } = await supabase
+        .from("notifications" as any)
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+      
+      setUnreadNotif(count || 0);
+
+      // 3. Fetch Wedding Data
       const { data: weddingData } = await supabase
         .from("weddings")
         .select("*")
@@ -61,7 +75,7 @@ const Dashboard = () => {
       if (weddingData) {
         setWedding(weddingData);
         
-        // Hitung Countdown Hari
+        // Hitung Countdown
         if (weddingData.wedding_date) {
           const today = new Date();
           const wDate = new Date(weddingData.wedding_date);
@@ -69,7 +83,7 @@ const Dashboard = () => {
           setDaysLeft(diff > 0 ? diff : 0);
         }
 
-        // 3. Fetch Tasks & Hitung Statistik
+        // 4. Fetch Tasks & Hitung Statistik
         const { data: tasks } = await supabase
           .from("tasks")
           .select("*")
@@ -77,14 +91,13 @@ const Dashboard = () => {
         
         if (tasks) {
           const total = tasks.length;
-          // Pakai 'any' di filter untuk aman dari strict type checking sementara
           const completed = tasks.filter((t: any) => t.is_completed).length;
           
           // Cari tugas hari ini
           const todayStr = format(new Date(), 'yyyy-MM-dd');
           const todayTasks = tasks.filter((t: any) => t.due_date === todayStr && !t.is_completed).length;
 
-          // Cari tugas terdekat yang belum selesai (Next Priority)
+          // Cari tugas terdekat yang belum selesai
           const upcoming = tasks
             .filter((t: any) => !t.is_completed && t.due_date)
             .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
@@ -93,7 +106,7 @@ const Dashboard = () => {
           setNextTask(upcoming);
         }
 
-        // 4. Fetch Guest Stats
+        // 5. Fetch Guest Stats
         const { data: guests } = await supabase
           .from("guests")
           .select("pax, status")
@@ -101,7 +114,6 @@ const Dashboard = () => {
 
         if (guests) {
           const totalInvited = guests.length;
-          // Hitung total pax (orang) yang confirm hadir
           const totalPaxAttending = guests
             .filter((g: any) => g.status === 'attending')
             .reduce((sum: number, g: any) => sum + (g.pax || 1), 0);
@@ -109,16 +121,14 @@ const Dashboard = () => {
           setGuestStats({ total: totalInvited, attending: totalPaxAttending });
         }
 
-        // 5. Fetch Budget Stats
+        // 6. Fetch Budget Stats
         const { data: budgets } = await supabase
           .from("budget_items")
           .select("estimated_cost, actual_cost, status")
           .eq("wedding_id", weddingData.id);
 
         if (budgets) {
-          // Hitung total estimasi
           const totalEst = budgets.reduce((sum: number, b: any) => sum + Number(b.estimated_cost || 0), 0);
-          // Hitung yang sudah dibayar (Paid)
           const totalPaid = budgets
             .filter((b: any) => b.status === 'paid')
             .reduce((sum: number, b: any) => sum + Number(b.estimated_cost || 0), 0);
@@ -133,7 +143,7 @@ const Dashboard = () => {
     }
   };
 
-  // Helper: Format Rupiah Singkat (1.5 Jt / 500 Rb)
+  // Helper: Format Rupiah Singkat
   const formatRupiahShort = (amount: number) => {
     if (amount >= 1000000) {
       return `Rp ${(amount / 1000000).toFixed(1)} Jt`;
@@ -144,7 +154,6 @@ const Dashboard = () => {
     return `Rp ${amount}`;
   };
 
-  // Kalkulasi Progress Bar (0-100)
   const taskProgress = taskStats.total > 0 ? (taskStats.completed / taskStats.total) * 100 : 0;
 
   if (loading) {
@@ -159,7 +168,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-underwater p-6 pb-32">
       <div className="max-w-2xl mx-auto space-y-6">
         
-        {/* --- HEADER: GREETING & COUNTDOWN --- */}
+        {/* --- HEADER: GREETING & NOTIF --- */}
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-teal-green">
@@ -171,20 +180,25 @@ const Dashboard = () => {
                 : "Hari ini adalah hari bahagiamu! 💍"}
             </p>
           </div>
-          {/* Circular Countdown Mini */}
-          <div className="w-16 h-16 rounded-full bg-white shadow-soft flex flex-col items-center justify-center border-4 border-primary/10">
-            <span className="text-xl font-bold text-primary leading-none">{daysLeft}</span>
-            <span className="text-[10px] text-muted-foreground">Hari</span>
+          
+          {/* Tombol Notifikasi */}
+          <div 
+            onClick={() => navigate('/notifications')}
+            className="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center cursor-pointer active:scale-95 transition-transform relative border border-gray-100"
+          >
+            <Bell className="w-5 h-5 text-gray-600" />
+            {/* Badge Merah jika ada notif */}
+            {unreadNotif > 0 && (
+              <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>
+            )}
           </div>
         </div>
 
-        {/* --- HERO CARD: NEXT TASK & PROGRESS --- */}
+        {/* --- HERO CARD --- */}
         <Card className="bg-primary text-white p-6 rounded-3xl shadow-floating relative overflow-hidden">
-          {/* Background decoration */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
           
           <div className="relative z-10">
-            {/* Tanggal Pernikahan */}
             <div className="flex items-center gap-2 mb-2 opacity-90">
                <CalendarDays className="w-5 h-5" />
                <span className="text-sm font-medium">
@@ -194,7 +208,6 @@ const Dashboard = () => {
                </span>
             </div>
             
-            {/* Tugas Prioritas Berikutnya */}
             <div className="mt-4">
               <p className="text-primary-foreground/80 text-xs uppercase tracking-wider mb-1">
                 Prioritas Selanjutnya
@@ -218,20 +231,22 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Progress Bar Tugas */}
             <div className="mt-6">
                <div className="flex justify-between text-xs mb-1 opacity-80">
                   <span>Persiapan Tugas</span>
                   <span>{Math.round(taskProgress)}%</span>
                </div>
-               <Progress value={taskProgress} className="h-2 bg-black/20" indicatorClassName="bg-white" />
+               <Progress 
+                 value={taskProgress} 
+                 className="h-2 bg-black/20" 
+                 indicatorClassName="bg-white" // Props khusus untuk warna putih
+               />
             </div>
           </div>
         </Card>
 
-        {/* --- STATS GRID (BUDGET & TAMU) --- */}
+        {/* --- STATS GRID --- */}
         <div className="grid grid-cols-2 gap-4">
-           {/* Card 1: Budget */}
            <div 
              onClick={() => navigate('/budget')}
              className="bg-white p-4 rounded-3xl shadow-soft flex flex-col justify-between h-32 cursor-pointer hover:shadow-md transition-all active:scale-95 border border-transparent hover:border-green-100"
@@ -253,7 +268,6 @@ const Dashboard = () => {
               </div>
            </div>
 
-           {/* Card 2: Guests */}
            <div 
              onClick={() => navigate('/guests')}
              className="bg-white p-4 rounded-3xl shadow-soft flex flex-col justify-between h-32 cursor-pointer hover:shadow-md transition-all active:scale-95 border border-transparent hover:border-blue-100"
@@ -276,7 +290,7 @@ const Dashboard = () => {
            </div>
         </div>
 
-        {/* --- TODAY'S FOCUS SECTION --- */}
+        {/* --- TODAY'S FOCUS --- */}
         <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-5 border border-white shadow-sm">
            <div className="flex items-center gap-2 mb-4">
               <CheckCircle2 className="w-5 h-5 text-teal-green" />
