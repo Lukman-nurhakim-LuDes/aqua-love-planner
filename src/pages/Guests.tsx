@@ -7,25 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, UserPlus } from "lucide-react";
-import underwaterDecoration from "@/assets/underwater-decoration.png";
+import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const Guests = () => {
   const [guests, setGuests] = useState<any[]>([]);
   const [wedding, setWedding] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [newGuest, setNewGuest] = useState({ name: "", email: "", phone: "", status: "pending" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // State Edit
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "Friend",
+    status: "pending",
+    pax: "1"
+  });
 
   useEffect(() => {
-    fetchGuests();
+    fetchData();
   }, []);
 
-  const fetchGuests = async () => {
+  const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    setCurrentUser(user);
 
     const { data: weddingData } = await supabase
       .from("weddings")
@@ -35,164 +43,190 @@ const Guests = () => {
 
     if (weddingData) {
       setWedding(weddingData);
-
       const { data: guestsData } = await supabase
         .from("guests")
         .select("*")
         .eq("wedding_id", weddingData.id)
-        .order("created_at", { ascending: false });
-
+        .order("name", { ascending: true });
       setGuests(guestsData || []);
     }
   };
 
-  const createGuest = async () => {
-    if (!newGuest.name || !wedding) return;
+  const handleSave = async () => {
+    if (!formData.name || !wedding) return;
 
-    await supabase.from("guests").insert({
-      wedding_id: wedding.id,
-      name: newGuest.name,
-      email: newGuest.email,
-      phone: newGuest.phone,
-      status: newGuest.status,
-      added_by: currentUser.id,
+    try {
+      if (isEditing && editId) {
+         // UPDATE (Tambahkan 'as any')
+         const { error } = await supabase.from("guests").update({
+            name: formData.name,
+            category: formData.category,
+            status: formData.status,
+            pax: parseInt(formData.pax)
+         } as any).eq("id", editId);
+         if (error) throw error;
+         toast.success("Guest updated");
+      } else {
+         // INSERT (Tambahkan 'as any')
+         const { error } = await supabase.from("guests").insert({
+            wedding_id: wedding.id,
+            name: formData.name,
+            category: formData.category,
+            status: formData.status,
+            pax: parseInt(formData.pax)
+         } as any);
+         if (error) throw error;
+         toast.success("Guest added");
+      }
+      
+      resetForm();
+      fetchData();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Delete this guest?")) {
+      await supabase.from("guests").delete().eq("id", id);
+      toast.success("Guest deleted");
+      fetchData();
+    }
+  };
+
+  const handleEdit = (item: any) => {
+    setFormData({
+      name: item.name,
+      category: item.category,
+      status: item.status,
+      pax: item.pax.toString()
     });
+    setEditId(item.id);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
 
-    setNewGuest({ name: "", email: "", phone: "", status: "pending" });
+  const resetForm = () => {
+    setFormData({ name: "", category: "Friend", status: "pending", pax: "1" });
     setIsDialogOpen(false);
-    fetchGuests();
-    toast.success("Guest added!");
+    setIsEditing(false);
+    setEditId(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed": return "bg-primary/20 text-primary";
-      case "declined": return "bg-destructive/20 text-destructive";
-      case "invited": return "bg-champagne text-teal-green";
-      default: return "bg-muted text-muted-foreground";
+      case "attending": return "bg-green-100 text-green-700 hover:bg-green-200";
+      case "declined": return "bg-red-100 text-red-700 hover:bg-red-200";
+      default: return "bg-gray-100 text-gray-700 hover:bg-gray-200";
     }
   };
 
-  const getAddedByLabel = (addedBy: string) => {
-    return addedBy === currentUser?.id ? "Added by You" : "Added by Partner";
-  };
+  const totalPax = guests.reduce((sum, g) => sum + (g.status === 'attending' ? g.pax : 0), 0);
 
   return (
     <div className="min-h-screen bg-gradient-underwater p-6 pb-24">
       <div className="max-w-2xl mx-auto space-y-6">
+        
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-teal-green">Guest List</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {guests.length} {guests.length === 1 ? "guest" : "guests"} invited
-            </p>
-          </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="icon" className="rounded-full shadow-floating">
-                <Plus className="w-5 h-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card">
-              <DialogHeader>
-                <DialogTitle>Add Guest</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Guest Name</Label>
-                  <Input
-                    value={newGuest.name}
-                    onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <Label>Email (optional)</Label>
-                  <Input
-                    type="email"
-                    value={newGuest.email}
-                    onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
-                    placeholder="john@example.com"
-                  />
-                </div>
-                <div>
-                  <Label>Phone (optional)</Label>
-                  <Input
-                    type="tel"
-                    value={newGuest.phone}
-                    onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
-                    placeholder="+1 234 567 8900"
-                  />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select value={newGuest.status} onValueChange={(value) => setNewGuest({ ...newGuest, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="invited">Invited</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="declined">Declined</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={createGuest} className="w-full">Add Guest</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+           <div>
+              <h1 className="text-3xl font-bold text-teal-green">Guest List</h1>
+              <p className="text-sm text-muted-foreground">{guests.length} Invitations • {totalPax} Attending</p>
+           </div>
+           
+           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) resetForm(); }}>
+              <DialogTrigger asChild>
+                 <Button className="rounded-full shadow-floating bg-primary hover:scale-105 transition-transform">
+                    <Plus className="w-5 h-5 mr-2" /> Add Guest
+                 </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-white">
+                 <DialogHeader>
+                    <DialogTitle>{isEditing ? "Edit Guest" : "Add New Guest"}</DialogTitle>
+                 </DialogHeader>
+                 <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                       <Label>Full Name</Label>
+                       <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. John Doe" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <Label>Category</Label>
+                          <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}>
+                             <SelectTrigger><SelectValue /></SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="Family">Family</SelectItem>
+                                <SelectItem value="Friend">Friend</SelectItem>
+                                <SelectItem value="Colleague">Colleague</SelectItem>
+                                <SelectItem value="VIP">VIP</SelectItem>
+                             </SelectContent>
+                          </Select>
+                       </div>
+                       <div className="space-y-2">
+                          <Label>Pax (Orang)</Label>
+                          <Input type="number" value={formData.pax} onChange={e => setFormData({...formData, pax: e.target.value})} />
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <Label>RSVP Status</Label>
+                       <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                             <SelectItem value="pending">Pending (Belum Jawab)</SelectItem>
+                             <SelectItem value="attending">Attending (Hadir)</SelectItem>
+                             <SelectItem value="declined">Declined (Tidak Hadir)</SelectItem>
+                          </SelectContent>
+                       </Select>
+                    </div>
+                    <Button onClick={handleSave} className="w-full">{isEditing ? "Update Guest" : "Add Guest"}</Button>
+                 </div>
+              </DialogContent>
+           </Dialog>
         </div>
 
+        {/* Guest List */}
         <div className="space-y-3">
-          {guests.map((guest) => (
-            <Card 
-              key={guest.id}
-              className="bg-card shadow-soft rounded-2xl p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <UserPlus className="w-4 h-4 text-primary" />
-                    <h3 className="font-medium text-foreground">{guest.name}</h3>
-                  </div>
-                  
-                  {guest.email && (
-                    <p className="text-sm text-muted-foreground">{guest.email}</p>
-                  )}
-                  {guest.phone && (
-                    <p className="text-sm text-muted-foreground">{guest.phone}</p>
-                  )}
-                  
-                  <div className="flex gap-2 mt-3">
-                    <Badge className={getStatusColor(guest.status)}>
-                      {guest.status}
+           {guests.map((guest) => (
+              <Card key={guest.id} className="p-4 flex items-center justify-between shadow-soft border-none rounded-2xl group">
+                 <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                       {guest.name.charAt(0)}
+                    </div>
+                    <div>
+                       <h3 className="font-semibold text-gray-800">{guest.name}</h3>
+                       <div className="flex gap-2 text-xs mt-1">
+                          <span className="text-muted-foreground">{guest.category}</span>
+                          <span className="text-muted-foreground">• {guest.pax} pax</span>
+                       </div>
+                    </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-3">
+                    <Badge className={`capitalize cursor-pointer ${getStatusColor(guest.status)}`}>
+                       {guest.status}
                     </Badge>
-                    <span className="text-xs text-muted-foreground self-center">
-                      {getAddedByLabel(guest.added_by)}
-                    </span>
-                  </div>
-                </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-1">
+                       <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-primary" onClick={() => handleEdit(guest)}>
+                          <Pencil className="w-4 h-4" />
+                       </Button>
+                       <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-red-500" onClick={() => handleDelete(guest.id)}>
+                          <Trash2 className="w-4 h-4" />
+                       </Button>
+                    </div>
+                 </div>
+              </Card>
+           ))}
+           
+           {guests.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                 <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                 <p>No guests yet. Start inviting!</p>
               </div>
-            </Card>
-          ))}
-
-          {guests.length === 0 && (
-            <Card className="bg-card shadow-soft rounded-2xl p-12 text-center">
-              <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No guests yet. Start building your guest list!</p>
-            </Card>
-          )}
+           )}
         </div>
 
-        <div className="relative -mx-6">
-          <img 
-            src={underwaterDecoration} 
-            alt="Underwater decoration" 
-            className="w-full h-32 object-cover object-top opacity-60"
-          />
-        </div>
       </div>
     </div>
   );
