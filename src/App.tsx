@@ -5,14 +5,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Pages
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Guests from "./pages/Guests";
 import Budget from "./pages/Budget";
 import Profile from "./pages/Profile";
+import CalendarPage from "./pages/CalendarPage"; // IMPORT INI WAJIB ADA
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+
+// Components
 import BottomNav from "./components/BottomNav";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +42,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-underwater flex items-center justify-center">
-        <div className="text-primary">Loading...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -56,6 +62,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          
+          {/* HOME / DASHBOARD */}
           <Route
             path="/"
             element={
@@ -65,6 +73,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* TASKS */}
           <Route
             path="/tasks"
             element={
@@ -74,6 +84,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* GUESTS */}
           <Route
             path="/guests"
             element={
@@ -83,6 +95,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* BUDGET */}
           <Route
             path="/budget"
             element={
@@ -92,6 +106,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* PROFILE */}
           <Route
             path="/profile"
             element={
@@ -101,7 +117,19 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+          {/* --- BARU: CALENDAR --- */}
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+                <BottomNav />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 NOT FOUND */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
